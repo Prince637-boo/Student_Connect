@@ -64,3 +64,53 @@ exports.deleteProject = (req, res) => {
     projects.splice(projectIndex, 1);
     res.status(200).json({ message: "Projet supprimé avec succès." });
 };
+
+// --- LIKE / DISLIKE ---
+exports.likeProject = (req, res) => {
+    const { id } = req.params;
+    const userId = req.auth.userId;
+    const project = projects.find(p => p.id === parseInt(id));
+
+    if (!project) return res.status(404).json({ error: "Projet introuvable" });
+
+    // Si l'utilisateur a déjà liké, on retire le like (Toggle)
+    const index = project.likes.indexOf(userId);
+    if (index === -1) {
+        project.likes.push(userId);
+        res.status(200).json({ message: "Projet liké ! ❤️", likes: project.likes.length });
+    } else {
+        project.likes.splice(index, 1);
+        res.status(200).json({ message: "Like retiré 💔", likes: project.likes.length });
+    }
+};
+
+// --- COMMENTAIRES ---
+exports.addComment = (req, res) => {
+    const { id } = req.params;
+    const { text } = req.body;
+    const project = projects.find(p => p.id === parseInt(id));
+
+    if (!project) return res.status(404).json({ error: "Projet introuvable" });
+
+    const newComment = {
+        userId: req.auth.userId,
+        text,
+        date: new Date()
+    };
+
+    project.comments.push(newComment);
+    res.status(201).json({ message: "Commentaire ajouté ! 💬", comments: project.comments });
+};
+
+// --- COMPTEUR DE VUES ---
+exports.trackView = (req, res) => {
+    const { id } = req.params;
+    const project = projects.find(p => p.id === parseInt(id));
+
+    if (project) {
+        project.views += 1;
+        res.status(200).json({ views: project.views });
+    } else {
+        res.status(404).json({ error: "Projet introuvable" });
+    }
+};

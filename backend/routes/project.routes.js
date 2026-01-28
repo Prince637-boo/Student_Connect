@@ -15,4 +15,11 @@ router.put('/:id', auth, projectCtrl.updateProject);
 // Supprimer un projet
 router.delete('/:id', auth, projectCtrl.deleteProject);
 
+// Likes et Commentaires (Privé)
+router.post('/:id/like', auth, projectCtrl.likeProject);
+router.post('/:id/comment', auth, projectCtrl.addComment);
+
+// Vues (Public - appelé par le frontend quand on clique sur le projet)
+router.post('/:id/view', projectCtrl.trackView);
+
 module.exports = router;
