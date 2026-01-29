@@ -1,26 +1,31 @@
 // controllers/project.controller.js
-
-let projects = []; // Notre base temporaire
+const User = require('../models/User');
 
 // Créer un nouveau projet
-exports.createProject = (req, res) => {
-    const { title, description, techStack } = req.body;
+const Project = require('../models/Project');
 
-    if (!title || !description) {
-        return res.status(400).json({ error: "Le titre et la description sont requis !" });
+exports.createProject = async (req, res) => {
+    try {
+        const { title, description, category } = req.body;
+
+        if (!title || !description || !category) {
+            return res.status(400).json({ error: "Tous les champs sont obligatoires !" });
+        }
+        
+        // C'est ici qu'on utilise l'ID extrait du token ! 🔑
+        const ownerId = req.auth.userId; 
+
+        const newProject = await Project.create({
+            title,
+            description,
+            category,
+            ownerId // On lie le projet à l'utilisateur
+        });
+
+        res.status(201).json(newProject);
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de la création du projet" });
     }
-
-    const newProject = {
-        id: Date.now(),
-        title,
-        description,
-        techStack: techStack || [],
-        ownerId: req.auth.userId, // On récupère l'ID grâce au middleware !
-        createdAt: new Date()
-    };
-
-    projects.push(newProject);
-    res.status(201).json({ message: "Projet publié ! ", project: newProject });
 };
 
 // Récupérer tous les projets
@@ -28,89 +33,79 @@ exports.getAllProjects = (req, res) => {
     res.status(200).json(projects);
 };
 
-// Modifier un projet
-exports.updateProject = (req, res) => {
-    const { id } = req.params; // On récupère l'ID du projet dans l'URL
-    const project = projects.find(p => p.id === parseInt(id));
-
-    if (!project) return res.status(404).json({ error: "Projet introuvable" });
-
-    // LA VÉRIFICATION CRUCIALE 
-    if (project.ownerId !== req.auth.userId) {
-        return res.status(403).json({ error: "Action non autorisée ! Ce n'est pas ton projet." });
+// --- RÉCUPÉRER TOUS LES PROJETS ---
+exports.getAllProjects = async (req, res) => {
+    try {
+        const projects = await Project.findAll({
+            include: { model: User, attributes: ['nom', 'prenom'] } // On inclut l'auteur
+        });
+        res.status(200).json(projects);
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de la récupération des projets." });
     }
-
-    // Mise à jour des données
-    const { title, description, techStack } = req.body;
-    project.title = title || project.title;
-    project.description = description || project.description;
-    project.techStack = techStack || project.techStack;
-
-    res.status(200).json({ message: "Projet mis à jour !", project });
 };
 
-// Supprimer un projet
-exports.deleteProject = (req, res) => {
-    const { id } = req.params;
-    const projectIndex = projects.findIndex(p => p.id === parseInt(id));
+// --- MODIFIER UN PROJET ---
+exports.updateProject = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const project = await Project.findByPk(id);
 
-    if (projectIndex === -1) return res.status(404).json({ error: "Projet introuvable" });
+        if (!project) return res.status(404).json({ error: "Projet introuvable" });
 
-    // MÊME VÉRIFICATION 
-    if (projects[projectIndex].ownerId !== req.auth.userId) {
-        return res.status(403).json({ error: "Tu ne peux pas supprimer ce projet !" });
+        // Vérification du propriétaire
+        if (project.ownerId !== req.auth.userId) {
+            return res.status(403).json({ error: "Action non autorisée !" });
+        }
+
+        await project.update(req.body); // Met à jour avec les données envoyées
+        res.status(200).json({ message: "Projet mis à jour !", project });
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de la modification." });
     }
+};
 
-    projects.splice(projectIndex, 1);
-    res.status(200).json({ message: "Projet supprimé avec succès." });
+// --- SUPPRIMER UN PROJET ---
+exports.deleteProject = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const project = await Project.findByPk(id);
+
+        if (!project) return res.status(404).json({ error: "Projet introuvable" });
+
+        if (project.ownerId !== req.auth.userId) {
+            return res.status(403).json({ error: "Action non autorisée !" });
+        }
+
+        await project.destroy(); // Suppression physique en base de données
+        res.status(200).json({ message: "Projet supprimé avec succès." });
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de la suppression." });
+    }
 };
 
 // --- LIKE / DISLIKE ---
-exports.likeProject = (req, res) => {
-    const { id } = req.params;
-    const userId = req.auth.userId;
-    const project = projects.find(p => p.id === parseInt(id));
+exports.likeProject = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.auth.userId;
+        const project = await Project.findByPk(id);
 
-    if (!project) return res.status(404).json({ error: "Projet introuvable" });
+        if (!project) return res.status(404).json({ error: "Projet introuvable" });
 
-    // Si l'utilisateur a déjà liké, on retire le like (Toggle)
-    const index = project.likes.indexOf(userId);
-    if (index === -1) {
-        project.likes.push(userId);
-        res.status(200).json({ message: "Projet liké ! ❤️", likes: project.likes.length });
-    } else {
-        project.likes.splice(index, 1);
-        res.status(200).json({ message: "Like retiré 💔", likes: project.likes.length });
-    }
-};
+        // Sequelize gère les tableaux JSON si tu as défini le champ comme tel
+        let likes = project.likes || [];
+        const index = likes.indexOf(userId);
 
-// --- COMMENTAIRES ---
-exports.addComment = (req, res) => {
-    const { id } = req.params;
-    const { text } = req.body;
-    const project = projects.find(p => p.id === parseInt(id));
+        if (index === -1) {
+            likes.push(userId);
+        } else {
+            likes.splice(index, 1);
+        }
 
-    if (!project) return res.status(404).json({ error: "Projet introuvable" });
-
-    const newComment = {
-        userId: req.auth.userId,
-        text,
-        date: new Date()
-    };
-
-    project.comments.push(newComment);
-    res.status(201).json({ message: "Commentaire ajouté ! 💬", comments: project.comments });
-};
-
-// --- COMPTEUR DE VUES ---
-exports.trackView = (req, res) => {
-    const { id } = req.params;
-    const project = projects.find(p => p.id === parseInt(id));
-
-    if (project) {
-        project.views += 1;
-        res.status(200).json({ views: project.views });
-    } else {
-        res.status(404).json({ error: "Projet introuvable" });
+        await project.update({ likes }); // On sauvegarde le nouveau tableau de likes
+        res.status(200).json({ message: "Interaction enregistrée", likesCount: likes.length });
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors du like." });
     }
 };

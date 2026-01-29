@@ -3,6 +3,7 @@ const app = express();
 const authRoutes = require('./routes/auth.routes'); 
 const userRoutes = require('./routes/user.routes');
 const projectRoutes = require('./routes/project.routes');
+const sequelize = require('./config/database');
 
 app.use(express.json());
 
@@ -18,4 +19,12 @@ app.use('/api/user', userRoutes);
 
 app.use('/api/projects', projectRoutes);
 
-app.listen(5000, () => console.log("Serveur prêt ! "));
+//  On synchronise la base de données avant de lancer le serveur
+sequelize.sync()
+    .then(() => {
+        console.log('La base de données est synchronisée ! 🐘');
+        app.listen(5000, () => console.log("Serveur prêt sur le port 5000 ! "));
+    })
+    .catch(err => {
+        console.error('Erreur de synchronisation : ', err);
+    });
