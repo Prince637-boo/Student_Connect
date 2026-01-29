@@ -28,11 +28,6 @@ exports.createProject = async (req, res) => {
     }
 };
 
-// Récupérer tous les projets
-exports.getAllProjects = (req, res) => {
-    res.status(200).json(projects);
-};
-
 // --- RÉCUPÉRER TOUS LES PROJETS ---
 exports.getAllProjects = async (req, res) => {
     try {
@@ -109,3 +104,54 @@ exports.likeProject = async (req, res) => {
         res.status(500).json({ error: "Erreur lors du like." });
     }
 };
+
+// --- AJOUTER UN COMMENTAIRE ---
+exports.addComment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { content } = req.body;
+        const userId = req.auth.userId;
+
+        if (!content) {
+            return res.status(400).json({ error: "Le commentaire est vide" });
+        }
+
+        const project = await Project.findByPk(id);
+        if (!project) {
+            return res.status(404).json({ error: "Projet introuvable" });
+        }
+
+        const comments = project.comments || [];
+        comments.push({
+            userId,
+            content,
+            createdAt: new Date()
+        });
+
+        await project.update({ comments });
+
+        res.status(200).json({ message: "Commentaire ajouté", comments });
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de l'ajout du commentaire" });
+    }
+};
+
+// --- INCRÉMENTER LES VUES ---
+exports.trackView = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const project = await Project.findByPk(id);
+
+        if (!project) {
+            return res.status(404).json({ error: "Projet introuvable" });
+        }
+
+        const views = (project.views || 0) + 1;
+        await project.update({ views });
+
+        res.status(200).json({ views });
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors du tracking des vues" });
+    }
+};
+
