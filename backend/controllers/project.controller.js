@@ -1,25 +1,38 @@
 // controllers/project.controller.js
-const User = require('../models/User');
-
-// Créer un nouveau projet
-const Project = require('../models/Project');
+const { Project, User, Comment, Like } = require('../models');
 
 exports.createProject = async (req, res) => {
     try {
-        const { title, description, category } = req.body;
+        const projectObject = req.body;
+
+        let imageUrl = null;
+        let videoUrl = null;
+
+        if (req.file) {
+            const url = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+            if (req.file.mimetype.startsWith('image/')) {
+                imageUrl = url;
+            } else if (req.file.mimetype.startsWith('video/')) {
+                videoUrl = url;
+            }
+        }
+
+        const { title, description, category, youtubeLink } = projectObject;
 
         if (!title || !description || !category) {
             return res.status(400).json({ error: "Tous les champs sont obligatoires !" });
         }
-        
-        // C'est ici qu'on utilise l'ID extrait du token ! 🔑
-        const ownerId = req.auth.userId; 
+
+        const ownerId = req.auth.userId;
 
         const newProject = await Project.create({
             title,
             description,
             category,
-            ownerId // On lie le projet à l'utilisateur
+            youtubeLink,
+            imageUrl,
+            videoUrl,
+            ownerId
         });
 
         res.status(201).json(newProject);
@@ -32,10 +45,25 @@ exports.createProject = async (req, res) => {
 exports.getAllProjects = async (req, res) => {
     try {
         const projects = await Project.findAll({
-            include: { model: User, attributes: ['nom', 'prenom'] } // On inclut l'auteur
+            include: [
+                {
+                    model: User,
+                    attributes: ['nom', 'prenom']
+                },
+                {
+                    model: Comment,
+                    include: { model: User, attributes: ['nom', 'prenom'] } // Pour afficher l'auteur du com
+                },
+                {
+                    model: Like,
+                    attributes: ['userId'] // On récupère juste les ID des likers pour le front
+                }
+            ],
+            order: [['createdAt', 'DESC']]
         });
         res.status(200).json(projects);
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: "Erreur lors de la récupération des projets." });
     }
 };
@@ -48,12 +76,22 @@ exports.updateProject = async (req, res) => {
 
         if (!project) return res.status(404).json({ error: "Projet introuvable" });
 
-        // Vérification du propriétaire
         if (project.ownerId !== req.auth.userId) {
             return res.status(403).json({ error: "Action non autorisée !" });
         }
 
-        await project.update(req.body); // Met à jour avec les données envoyées
+        const projectObject = { ...req.body };
+
+        if (req.file) {
+            const url = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+            if (req.file.mimetype.startsWith('image/')) {
+                projectObject.imageUrl = url;
+            } else if (req.file.mimetype.startsWith('video/')) {
+                projectObject.videoUrl = url;
+            }
+        }
+
+        await project.update(projectObject);
         res.status(200).json({ message: "Projet mis à jour !", project });
     } catch (error) {
         res.status(500).json({ error: "Erreur lors de la modification." });
@@ -72,7 +110,7 @@ exports.deleteProject = async (req, res) => {
             return res.status(403).json({ error: "Action non autorisée !" });
         }
 
-        await project.destroy(); // Suppression physique en base de données
+        await project.destroy();
         res.status(200).json({ message: "Projet supprimé avec succès." });
     } catch (error) {
         res.status(500).json({ error: "Erreur lors de la suppression." });
@@ -82,24 +120,23 @@ exports.deleteProject = async (req, res) => {
 // --- LIKE / DISLIKE ---
 exports.likeProject = async (req, res) => {
     try {
-        const { id } = req.params;
+        const projectId = req.params.id;
         const userId = req.auth.userId;
-        const project = await Project.findByPk(id);
 
+        const project = await Project.findByPk(projectId);
         if (!project) return res.status(404).json({ error: "Projet introuvable" });
 
-        // Sequelize gère les tableaux JSON si tu as défini le champ comme tel
-        let likes = project.likes || [];
-        const index = likes.indexOf(userId);
+        const existingLike = await Like.findOne({
+            where: { projectId, userId }
+        });
 
-        if (index === -1) {
-            likes.push(userId);
+        if (existingLike) {
+            await existingLike.destroy();
+            res.status(200).json({ message: "Like supprimé" });
         } else {
-            likes.splice(index, 1);
+            await Like.create({ projectId, userId });
+            res.status(201).json({ message: "Like ajouté" });
         }
-
-        await project.update({ likes }); // On sauvegarde le nouveau tableau de likes
-        res.status(200).json({ message: "Interaction enregistrée", likesCount: likes.length });
     } catch (error) {
         res.status(500).json({ error: "Erreur lors du like." });
     }
@@ -108,7 +145,7 @@ exports.likeProject = async (req, res) => {
 // --- AJOUTER UN COMMENTAIRE ---
 exports.addComment = async (req, res) => {
     try {
-        const { id } = req.params;
+        const projectId = req.params.id;
         const { content } = req.body;
         const userId = req.auth.userId;
 
@@ -116,21 +153,23 @@ exports.addComment = async (req, res) => {
             return res.status(400).json({ error: "Le commentaire est vide" });
         }
 
-        const project = await Project.findByPk(id);
+        const project = await Project.findByPk(projectId);
         if (!project) {
             return res.status(404).json({ error: "Projet introuvable" });
         }
 
-        const comments = project.comments || [];
-        comments.push({
-            userId,
+        const newComment = await Comment.create({
             content,
-            createdAt: new Date()
+            projectId,
+            userId
         });
 
-        await project.update({ comments });
+        // On renvoie le commentaire avec les infos du user pour l'affichage direct
+        const commentWithUser = await Comment.findByPk(newComment.id, {
+            include: { model: User, attributes: ['nom', 'prenom'] }
+        });
 
-        res.status(200).json({ message: "Commentaire ajouté", comments });
+        res.status(201).json({ message: "Commentaire ajouté", comment: commentWithUser });
     } catch (error) {
         res.status(500).json({ error: "Erreur lors de l'ajout du commentaire" });
     }
