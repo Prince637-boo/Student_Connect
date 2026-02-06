@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+/* On définit nos variables de couleurs ici pour la v4 */
+@theme {
+  --color-dark: #000000;
+  --color-light: #FFFFFF;
+  --color-gold: #e2b95b;
+  --color-gold-light: #fceea4;
+  --color-gold-dark: #9e7f2a;
+
+  /* Custom Dark Theme Colors */
+  --color-bg-dark: #0f1115;
+  /* Main background */
+  --color-card-dark: #1a1d24;
+  /* Card background */
+  --color-input-dark: #131519;
+  /* Input background */
+  --color-border-dark: #2a2e36;
+  /* Border color */
+  --color-text-gray: #9ca3af;
+}

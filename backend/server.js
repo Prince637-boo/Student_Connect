@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
@@ -7,6 +8,19 @@ const sequelize = require('./config/database');
 require('./models'); // Charge les associations
 
 const path = require('path');
+
+// 2. Configuration des options CORS
+const corsOptions = {
+    origin: 'http://localhost:5173', // L'adresse de ton frontend Vite
+    optionsSuccessStatus: 200,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true // Permet d'envoyer des cookies ou headers d'autorisation si besoin
+};
+
+//  Application du middleware avant mes routes
+app.use(cors(corsOptions));
+
+
 
 app.use(express.json());
 
@@ -34,3 +48,7 @@ sequelize.sync({ alter: true })
     .catch(err => {
         console.error('Erreur de synchronisation : ', err);
     });
+
+
+
+
