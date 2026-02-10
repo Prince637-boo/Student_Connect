@@ -1,16 +1,47 @@
-# React + Vite
+# Student Connect - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Bienvenue sur le frontend de **Student Connect**, la plateforme d'entraide où les compétences réelles des étudiants prennent de la valeur.
 
-Currently, two official plugins are available:
+## 🚀 Stack Technique
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Framework** : React (Vite)
+- **Styling** : Tailwind CSS
+- **Icônes** : Lucide React
+- **Gestion des routes** : React Router DOM
+- **Appels API** : Axios
 
-## React Compiler
+## 📂 Architecture du Projet
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+L'architecture est organisée de manière modulaire pour faciliter la maintenance et l'évolution du projet :
 
-## Expanding the ESLint configuration
+```text
+src/
+├── assets/         # Images, logos et ressources statiques
+├── components/     # Composants UI réutilisables (Boutons, Inputs, etc.)
+├── hooks/          # Hooks React personnalisés
+├── layouts/        # Structures de page (Layout d'authentification, etc.)
+├── pages/          # Composants de page complets (Login, Register, Home)
+├── services/       # Logique de communication avec le backend (API)
+├── App.jsx         # Composant racine et configuration des routes
+├── index.css       # Styles globaux et configuration Tailwind
+└── main.jsx        # Point d'entrée de l'application
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Installation et Lancement
+
+1. **Installer les dépendances** :
+   ```bash
+   npm install
+   ```
+
+2. **Lancer le serveur de développement** :
+   ```bash
+   npm run dev
+   ```
+
+3. **Accéder à l'application** :
+   Ouvrez votre navigateur sur `http://localhost:5173`.
+
+## 🔗 Communication avec le Backend
+
+Le frontend communique avec le backend via une instance Axios configurée dans `src/services/api.js`. Un intercepteur est utilisé pour ajouter automatiquement le token JWT présent dans le `localStorage` à chaque requête authentifiée.

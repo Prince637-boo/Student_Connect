@@ -13,3 +13,12 @@ export const login = async (email, password) => {
     throw error.response ? error.response.data : new Error("Erreur serveur");
   }
 };
+
+export const register = async (userData) => {
+  try {
+    const response = await api.post('/auth/register', userData);
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : new Error("Erreur serveur");
+  }
+};
