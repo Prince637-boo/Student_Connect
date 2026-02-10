@@ -29,6 +29,26 @@ const User = sequelize.define('User', {
     ecole: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    bio: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    skills: {
+        type: DataTypes.STRING, // Stocké comme une chaîne (ex: "React, Node, CSS")
+        allowNull: true
+    },
+    github: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    linkedin: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    photoUrl: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 });
 

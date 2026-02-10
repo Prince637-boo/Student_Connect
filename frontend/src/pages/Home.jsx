@@ -3,8 +3,10 @@ import Sidebar from '../components/Sidebar';
 import ProjectCard from '../components/ProjectCard';
 import { getAllProjects } from '../services/projectService';
 import { Loader2, Plus } from 'lucide-react';
+import { useUI } from '../context/UIContext';
 
 const Home = () => {
+  const { openPublishModal } = useUI();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -89,7 +91,10 @@ const Home = () => {
       </main>
 
       {/* Bouton d'action flottant (Mobile/Quick actions) */}
-      <button className="fixed bottom-8 right-8 w-14 h-14 bg-black text-[#D4AF37] rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group">
+      <button
+        onClick={openPublishModal}
+        className="fixed bottom-8 right-8 w-14 h-14 bg-black text-[#D4AF37] rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group"
+      >
         <Plus size={24} className="group-hover:rotate-90 transition-transform duration-300" />
       </button>
     </div>
