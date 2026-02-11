@@ -1,7 +1,7 @@
 // controllers/auth.controller.js
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken'); 
+const jwt = require('jsonwebtoken');
 exports.register = async (req, res) => {
     try {
         const { nom, prenom, email, password, sexe, ecole } = req.body;
@@ -24,9 +24,9 @@ exports.register = async (req, res) => {
             ecole
         });
 
-        res.status(201).json({ 
+        res.status(201).json({
             message: "Utilisateur créé en base de données ! ",
-            userId: newUser.id 
+            userId: newUser.id
         });
 
     } catch (error) {
@@ -44,10 +44,10 @@ exports.login = async (req, res) => {
         const { email, password } = req.body;
 
         // 1. Chercher l'utilisateur
-        const user = await User.findOne({ where: { email : email } });
+        const user = await User.findOne({ where: { email: email } });
         if (!user) {
-                return res.status(400).json({ error: "Utilisateur non trouvé ! " });
-            }
+            return res.status(400).json({ error: "Utilisateur non trouvé ! " });
+        }
 
         // 2. Vérifier le mot de passe
         const isMatch = await bcrypt.compare(password, user.password);
@@ -56,10 +56,10 @@ exports.login = async (req, res) => {
         }
 
         // 3. Créer le Token JWT
-        // On met l'ID de l'utilisateur dedans. "RANDOM_SECRET" est une clé que tu choisiras.
+        // On met l'ID de l'utilisateur dedans.
         const token = jwt.sign(
-            { id: user.id }, 
-            "MA_CLE_SECRETE_SUPER_SECURISEE", 
+            { id: user.id },
+            process.env.JWT_SECRET,
             { expiresIn: '24h' } // Le token expire après un jour
         );
 

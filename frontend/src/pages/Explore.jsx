@@ -11,7 +11,7 @@ const Explore = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Tous');
 
-    const categories = ['Tous', 'Design', 'Développement', 'Marketing', 'Business', 'Autre'];
+    const categories = ['Tous', 'Design', 'Développement', 'Marketing', 'Business', 'Finance','Innovation', 'Autre'];
 
     useEffect(() => {
         fetchProjects();

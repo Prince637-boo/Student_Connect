@@ -1,9 +1,14 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet'); // Sécurisation des headers HTTP
+const morgan = require('morgan'); // Logging
+const errorHandler = require('./middlewares/errorHandler');
 const app = express();
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const projectRoutes = require('./routes/project.routes');
+const messageRoutes = require('./routes/Message.routes');
 const sequelize = require('./config/database');
 require('./models'); // Charge les associations
 
@@ -19,6 +24,10 @@ const corsOptions = {
 
 //  Application du middleware avant mes routes
 app.use(cors(corsOptions));
+app.use(helmet()); // Protection avec Helmet
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })); // Pour permettre le chargement des images
+app.use(morgan('dev'));
+
 
 
 
@@ -27,9 +36,11 @@ app.use(express.json());
 // Servir les images de manière statique
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
+const authLimiter = require('./middlewares/rateLimit');
+
 // Routes pour l'authentification
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 
 // Routes pour les profils
 
@@ -38,6 +49,13 @@ app.use('/api/user', userRoutes);
 // Routes pour les projets
 
 app.use('/api/projects', projectRoutes);
+
+// Routes pour les messages
+
+app.use('/api/messages', messageRoutes);
+
+// Middleware de gestion d'erreur global (à mettre à la fin)
+app.use(errorHandler);
 
 //  On synchronise la base de données avant de lancer le serveur
 sequelize.sync({ alter: true })

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { MessageCircle, Heart, Eye, Play, Share2, MoreHorizontal } from 'lucide-react';
+import { MessageCircle, Heart, Eye, Share2, MoreHorizontal } from 'lucide-react';
 import CommentSection from './CommentSection';
 import { likeProject, trackView } from '../services/projectService';
+import ProjectMedia from './ProjectMedia';
 
 const ProjectCard = ({ project }) => {
     const [showComments, setShowComments] = useState(false);
@@ -34,7 +35,7 @@ const ProjectCard = ({ project }) => {
             <div className="p-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-black to-gray-800 flex items-center justify-center text-[#D4AF37] font-bold text-lg shadow-lg">
-                        {project.User?.prenom?.[0]}{project.User?.nom?.[0]}
+                        {project.User?.prenom?.[0] || 'S'}{project.User?.nom?.[0] || 'C'}
                     </div>
                     <div>
                         <h3 className="font-black text-lg text-black leading-none mb-1 group-hover:text-[#D4AF37] transition-colors">
@@ -50,24 +51,13 @@ const ProjectCard = ({ project }) => {
                 </button>
             </div>
 
-            {/* Media (Image ou Vidéo) */}
-            <div className="relative aspect-video bg-gray-900 group/media" onClick={handleView}>
-                {project.imageUrl ? (
-                    <img
-                        src={project.imageUrl}
-                        alt={project.title}
-                        className="w-full h-full object-cover group-hover/media:scale-105 transition-transform duration-700"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <Play size={48} className="text-[#D4AF37] opacity-50 group-hover/media:scale-125 group-hover/media:opacity-100 transition-all duration-500" />
-                    </div>
-                )}
-
-                {/* Catégorie badge */}
-                <div className="absolute top-4 right-4 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-white text-[10px] font-bold uppercase tracking-widest border border-white/20">
-                    {project.category}
-                </div>
+            {/* Media (Utilisation du nouveau composant intelligent) */}
+            <div onClick={handleView}>
+                <ProjectMedia
+                    imageUrl={project.imageUrl}
+                    youtubeLink={project.youtubeLink}
+                    category={project.category}
+                />
             </div>
 
             {/* Description */}

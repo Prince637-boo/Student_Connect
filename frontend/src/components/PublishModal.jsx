@@ -36,7 +36,7 @@ const PublishModal = () => {
         data.append('description', formData.description);
         data.append('youtubeLink', formData.youtubeLink);
         if (file) {
-            data.append('image', file); // Multer attend 'image'
+            data.append('file', file); // Multer attend 'file'
         }
 
         try {

@@ -20,4 +20,16 @@ const storage = multer.diskStorage({
     }
 });
 
-module.exports = multer({ storage: storage }).single('image');
+const fileFilter = (req, file, callback) => {
+    if (MIME_TYPES[file.mimetype]) {
+        callback(null, true);
+    } else {
+        callback(new Error('Format de fichier non supporté !'), false);
+    }
+};
+
+module.exports = multer({
+    storage: storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB (pour les vidéos)
+    fileFilter: fileFilter
+}).single('file');

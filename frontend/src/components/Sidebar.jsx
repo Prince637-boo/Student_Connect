@@ -2,6 +2,7 @@ import React from 'react';
 import { Home, MessageSquare, User, Settings, LogOut, Search, PlusCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUI } from '../context/UIContext';
+import { logout } from '../services/authService';
 
 const Sidebar = () => {
     const navigate = useNavigate();
@@ -17,7 +18,7 @@ const Sidebar = () => {
     ];
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        logout();
         navigate('/login');
     };
 

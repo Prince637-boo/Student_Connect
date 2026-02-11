@@ -1,0 +1,63 @@
+# Student Connect
+
+Plateforme collaborative pour les étudiants. Partagez vos projets, échangez des idées et construisez votre réseau.
+
+## 🚀 Fonctionnalités
+
+- **Authentification Sécurisée** : Inscription et connexion avec JWT.
+- **Gestion de Projets** : Publiez vos projets avec images ou vidéos YouTube.
+- **Réseau Social** : Likez, commentez et suivez les projets des autres.
+- **Messagerie Instantanée** : Discutez en temps réel avec d'autres étudiants.
+- **Design Premium** : Interface moderne et responsive.
+
+## 🛠 Technologies
+
+### Frontend
+- **React 19** avec Vite
+- **TailwindCSS v4**
+- **Lucide React** (Icônes)
+- **Axios** (Requêtes HTTP)
+
+### Backend
+- **Node.js** & **Express**
+- **MySQL** avec **Sequelize** ORM
+- **JWT** pour l'authentification
+- **Multer** pour l'upload de fichiers
+- **Helmet** & **Rate Limit** pour la sécurité
+
+## 📦 Installation
+
+### Prérequis
+- Node.js (v18+)
+- MySQL
+
+### 1. Cloner le projet
+```bash
+git clone https://github.com/votre-repo/student-connect.git
+cd student-connect
+```
+
+### 2. Backend
+```bash
+cd backend
+npm install
+# Copiez le fichier .env.example en .env et configurez votre base de données
+# npm start
+```
+
+### 3. Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## 🔒 Sécurité
+Le projet inclut plusieurs mesures de sécurité :
+- Hachage des mots de passe (Bcrypt)
+- Protection des headers HTTP (Helmet)
+- Limitation de débit (Rate Limiting)
+- Validation des données (Joi)
+
+## 📄 Licence
+MIT

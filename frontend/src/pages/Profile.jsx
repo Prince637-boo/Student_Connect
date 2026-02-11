@@ -7,6 +7,7 @@ import { getUserProfile, updateUserProfile } from '../services/userService';
 const Profile = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [editMode, setEditMode] = useState(false);
     const [formData, setFormData] = useState({
         bio: '',
@@ -25,6 +26,7 @@ const Profile = () => {
     const fetchProfile = async () => {
         try {
             setLoading(true);
+            setError(null);
             const data = await getUserProfile();
             setUser(data);
             setFormData({
@@ -36,6 +38,11 @@ const Profile = () => {
             setPreviewUrl(data.photoUrl);
         } catch (err) {
             console.error(err);
+            if (err.error?.includes('non authentifiée') || err.message?.includes('401')) {
+                setError('Vous devez être connecté pour accéder à votre profil.');
+            } else {
+                setError('Erreur lors du chargement du profil.');
+            }
         } finally {
             setLoading(false);
         }
@@ -81,6 +88,33 @@ const Profile = () => {
                 </div>
             </div>
         );
+    }
+
+    if (error) {
+        return (
+            <div className="flex h-screen bg-gray-50">
+                <Sidebar />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center max-w-md">
+                        <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <X size={40} className="text-red-500" />
+                        </div>
+                        <h2 className="text-2xl font-black text-black mb-2">Erreur d'authentification</h2>
+                        <p className="text-gray-600 mb-6">{error}</p>
+                        <a
+                            href="/login"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:scale-105 transition-all"
+                        >
+                            Se connecter
+                        </a>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return null;
     }
 
     return (
